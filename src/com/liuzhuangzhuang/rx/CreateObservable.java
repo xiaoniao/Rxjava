@@ -46,11 +46,15 @@ public class CreateObservable {
 	}
 	
 	public static void main(String[] args) {
-		repeat();
+		just();
+		from();
+		//repeat();
 	}
 	
+	// just 最多可以放10个参数
 	public static void just() {
-		// just 最多可以放10个参数
+		
+		// 发射一个炮弹
 		Observable<Bean> observable = Observable.just(new Bean("jack1"));
 		observable.subscribe(new Subscriber<Bean>() {
 			@Override
@@ -65,14 +69,16 @@ public class CreateObservable {
 
 			@Override
 			public void onNext(Bean t) {
+				System.out.println("next");
 				System.out.println(t.getName());
 			}
 		});
 
+		// 发射10个炮弹
 		observable = Observable.just(new Bean("jack1"), new Bean("jack2"),
 				new Bean("jack3"), new Bean("jack4"), new Bean("jack5"),
 				new Bean("jack6"), new Bean("jack7"), new Bean("jack8"),
-				new Bean("jack9"), new Bean("jack10"));
+				new Bean("jack9"), new Bean("jack10")); // 和 Observable.from(beans)等价的
 		observable.subscribe(new Subscriber<Bean>() {
 			@Override
 			public void onCompleted() {
@@ -86,10 +92,12 @@ public class CreateObservable {
 
 			@Override
 			public void onNext(Bean t) {
+				System.out.println("next");
 				System.out.println(t.getName());
 			}
 		});
 
+		// 发射一个子母弹
 		Observable<List<Bean>> observableBeans = Observable.just(beans); // 和上面的返回值不一样
 		observableBeans.subscribe(new Subscriber<List<Bean>>() {
 
@@ -105,17 +113,37 @@ public class CreateObservable {
 
 			@Override
 			public void onNext(List<Bean> t) {
+				System.out.println("next");
 				// 因为传的是 List<Bean>，是一个对象，所以只会执行一次 onNext , 而不同于上面传多个对象，执行多次 onNext
 				for (Bean bean : t) {
 					System.out.println(bean.getName());
 				}
 			}
 		});
+		
+		// 多种类型
+		Observable.just("1", 2, new Bean("3")).subscribe(new Subscriber<Object>() {
+			@Override
+			public void onCompleted() {
+				System.out.println("complete");
+			}@Override
+			public void onError(Throwable throwable) {
+				System.out.println("error");
+			}@Override
+			public void onNext(Object object) {
+				if (object instanceof Bean) {
+					Bean bean = (Bean) object;
+					System.out.println(bean.getName());
+				} else {
+					System.out.println(object);
+				}
+			}
+		});
 	}
 	
 	public static void from() {
-		// from (Future未来)
-		List<Future<Bean>> futures = new ArrayList<Future<Bean>>();
+		// from
+		List<Future<Bean>> futures = new ArrayList<Future<Bean>>(); // Future 未来
 		ExecutorService executor = Executors.newFixedThreadPool(10);
 		for (int i = 0; i < 10; i++) {
 			Future<Bean> future = executor.submit(new Callable<Bean>() {
@@ -125,7 +153,13 @@ public class CreateObservable {
 			});
 			futures.add(future);
 		}
-		Observable<Bean> observable = Observable.from(futures.get(0)); // Future<Bean>
+		
+		// Future<Bean>
+		Observable<Bean> observable = Observable.from(executor.submit(new Callable<Bean>() {
+			public Bean call() {
+				return new Bean("jack-future-one");
+			}
+		})); 
 		observable.subscribe(new Observer<Bean>() {
 
 			@Override
@@ -140,10 +174,11 @@ public class CreateObservable {
 
 			@Override
 			public void onNext(Bean t) {
+				System.out.println("next");
 				System.out.println(t.getName());
 			}
 		});
-
+		
 		Observable<Future<Bean>> furureBeanObservable = Observable.from(futures); // List<Future<Bean>> 和just不一样，just是传List执行一次，from传List执行List.size()次
 		furureBeanObservable.subscribe(new Observer<Future<Bean>>() {
 
@@ -159,6 +194,7 @@ public class CreateObservable {
 
 			@Override
 			public void onNext(Future<Bean> t) {
+				System.out.println("next");
 				try {
 					System.out.println(t.get().getName());
 				} catch (InterruptedException | ExecutionException e) {

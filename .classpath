@@ -2,6 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry kind="lib" path="/Users/liuzhuang/eclipse_wms/Rxjava/rxjava-1.1.8.jar" sourcepath="/Users/liuzhuang/eclipse_wms/Rxjava/RxJava-1.x"/>
+	<classpathentry kind="lib" path="D:/Project/eclipse/workspace/Rxjava/rxjava-1.1.8.jar" sourcepath="RxJava-1.x"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
