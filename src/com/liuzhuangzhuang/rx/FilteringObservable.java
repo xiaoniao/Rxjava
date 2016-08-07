@@ -18,7 +18,7 @@ public class FilteringObservable {
 
 			@Override
 			public void onCompleted() {
-				 // System.out.println("complete");
+				System.out.println("complete");
 			}
 
 			@Override
@@ -38,11 +38,36 @@ public class FilteringObservable {
 	}
 
 	public static void main(String[] args) {
+		// filter();
+		// takeLast();
+		// last();
+		// lastFunc();
+		// lastOrDefault();
+		// takeLastBuffer();
+		// skip();
+		// skipLast();
+		// take();
+		// first();
+		// takeFirst();
+		// firstOrDefault();
+		// elementAt();
+		// elementAtDefault();
+		// sample();
+		// throttleLast();
+		// throttleFirst();
+		// throttleWithTimeout();
+		// debounce();
+		timeout();
+		// distinct();
+		// distinctFunc();
+		// distinctUntillChanged();
+		// ofType();
+		// ignoreElements();
+	}
 
-		// filter
-		System.out.println("");
-		Observable<String> observable = getObservable();
-		observable.filter(new Func1<String, Boolean>() {
+	// filter
+	public static void filter() {
+		getObservable().filter(new Func1<String, Boolean>() {
 
 			@Override
 			public Boolean call(String string) {
@@ -52,24 +77,39 @@ public class FilteringObservable {
 				return false;
 			}
 		}).subscribe(getSubscriber());
+	}
 
-		// takeLast
-		System.out.println("");
-		observable = getObservable();
-		observable.takeLast(3).subscribe(getSubscriber());
+	// takeLast
+	public static void takeLast() {
+		getObservable().takeLast(3).subscribe(getSubscriber());
+	}
 
-		// last
-		System.out.println("");
-		observable.last().subscribe(getSubscriber());
+	// last
+	public static void last() {
+		getObservable().last().subscribe(getSubscriber());
+	}
+	
+	// last func1
+	public static void lastFunc() {
+		getObservable().last(new Func1<String, Boolean>() {
+			@Override
+			public Boolean call(String t) {
+				if (!t.startsWith("D")) {
+					return true;
+				}
+				return false;
+			}
+		}).subscribe(getSubscriber());
+	}
 
-		// lastOrDefault
-		System.out.println("");
-		observable.lastOrDefault("mary").subscribe(getSubscriber());
+	// lastOrDefault
+	public static void lastOrDefault() {
+		getObservable().lastOrDefault("mary").subscribe(getSubscriber());
+	}
 
-		// takeLastBuffer 转成集合
-		System.out.println("");
+	// takeLastBuffer 转成集合
+	public static void takeLastBuffer() {
 		getObservable().takeLastBuffer(3).subscribe(new Subscriber<List<String>>() {
-
 			@Override
 			public void onCompleted() {
 
@@ -87,25 +127,30 @@ public class FilteringObservable {
 				}
 			}
 		});
+	}
 
-		// skip
-		System.out.println();
+	// skip
+	public static void skip() {
 		getObservable().skip(1).subscribe(getSubscriber());
+	}
 
-		// skipLast
-		System.out.println();
+	// skipLast
+	public static void skipLast() {
 		getObservable().skipLast(2).subscribe(getSubscriber());
+	}
 
-		// take
-		System.out.println();
+	// take
+	public static void take() {
 		getObservable().take(3).subscribe(getSubscriber());
+	}
 
-		// first
-		System.out.println();
+	// first
+	public static void first() {
 		getObservable().first().subscribe(getSubscriber());
+	}
 
-		// takeFirst 附加了一个限制条件
-		System.out.println();
+	// takeFirst 有限制条件
+	public static void takeFirst() {
 		getObservable().takeFirst(new Func1<String, Boolean>() {
 			@Override
 			public Boolean call(String string) {
@@ -115,45 +160,52 @@ public class FilteringObservable {
 				return false;
 			}
 		}).subscribe(getSubscriber());
+	}
 
-		// firstOrDefault
-		System.out.println();
+	// firstOrDefault
+	public static void firstOrDefault() {
 		getObservable().firstOrDefault("mary").subscribe(getSubscriber());
+	}
 
-		// elementAt
-		System.out.println();
+	// elementAt
+	public static void elementAt() {
 		getObservable().elementAt(1).subscribe(getSubscriber());
+	}
 
-		// elementAtDefault
+	// elementAtDefault
+	public static void elementAtDefault() {
 		getObservable().elementAtOrDefault(20, "mary").subscribe(getSubscriber());
+	}
 
-		// sample
-		System.out.println("--sample");
+	// sample 采样
+	public static void sample() {
+		long time = System.currentTimeMillis();
 		Observable.create(new OnSubscribe<Bean>() {
 
 			@Override
 			public void call(Subscriber<? super Bean> t) {
 				// 比如在这里可以进行网络请求
-				for (int i = 0; i < 10; i++) {
+				for (int i = 1; i <= 5; i++) {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 					System.out.println("i=" + i);
-					t.onNext(new Bean("jack" + i));
+					t.onNext(new Bean("jack" + i)); // 虽然这里调用了onNext但是不一定会执行因为设置了采样sample
 				}
+				t.onCompleted(); // 为什么注释这句话 就不显示最近的一次了
 			}
-		}).sample(100, TimeUnit.MILLISECONDS).subscribe(new Subscriber<Bean>() {
+		}).sample(2000, TimeUnit.MILLISECONDS).subscribe(new Subscriber<Bean>() {
 
 			@Override
 			public void onCompleted() {
-				
+				System.out.println("complete");
 			}
 
 			@Override
 			public void onError(Throwable e) {
-				
+				System.out.println("error");
 			}
 
 			@Override
@@ -161,15 +213,17 @@ public class FilteringObservable {
 				System.out.println("sample:" + t.getName() + "  " + System.currentTimeMillis());
 			}
 		});
+		System.out.println(System.currentTimeMillis() - time);
+	}
 
-		// throttleLast
-		System.out.println("--throttleLast");
+	// throttleLast sample的别名
+	public static void throttleLast() {
 		Observable.create(new OnSubscribe<Bean>() {
 
 			@Override
 			public void call(Subscriber<? super Bean> t) {
 				// 比如在这里可以进行网络请求
-				for (int i = 0; i < 10; i++) {
+				for (int i = 1; i <= 5; i++) {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
@@ -179,16 +233,16 @@ public class FilteringObservable {
 					t.onNext(new Bean("jack" + i));
 				}
 			}
-		}).throttleLast(100, TimeUnit.MILLISECONDS).subscribe(new Subscriber<Bean>() {
+		}).throttleLast(2000, TimeUnit.MILLISECONDS).subscribe(new Subscriber<Bean>() {
 
 			@Override
 			public void onCompleted() {
-				
+
 			}
 
 			@Override
 			public void onError(Throwable e) {
-				
+
 			}
 
 			@Override
@@ -196,15 +250,16 @@ public class FilteringObservable {
 				System.out.println("throttleLast:" + t.getName() + "  " + System.currentTimeMillis());
 			}
 		});
+	}
 
-		// throttleFirst
-		System.out.println("--throttleFirst");
+	// throttleFirst
+	public static void throttleFirst() {
 		Observable.create(new OnSubscribe<Bean>() {
 
 			@Override
 			public void call(Subscriber<? super Bean> t) {
 				// 比如在这里可以进行网络请求
-				for (int i = 0; i < 10; i++) {
+				for (int i = 1; i <= 5; i++) {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
@@ -214,16 +269,16 @@ public class FilteringObservable {
 					t.onNext(new Bean("jack" + i));
 				}
 			}
-		}).throttleFirst(100, TimeUnit.MILLISECONDS).subscribe(new Subscriber<Bean>() {
+		}).throttleFirst(2000, TimeUnit.MILLISECONDS).subscribe(new Subscriber<Bean>() {
 
 			@Override
 			public void onCompleted() {
-				
+
 			}
 
 			@Override
 			public void onError(Throwable e) {
-				
+
 			}
 
 			@Override
@@ -231,15 +286,16 @@ public class FilteringObservable {
 				System.out.println("throttleFirst:" + t.getName() + "  " + System.currentTimeMillis());
 			}
 		});
+	}
 
-		// throttleWithTimeout
-		System.out.println("--throttleWithTimeout");
+	// throttleWithTimeout debounce的别名
+	public static void throttleWithTimeout() {
 		Observable.create(new OnSubscribe<Bean>() {
 
 			@Override
 			public void call(Subscriber<? super Bean> t) {
 				// 比如在这里可以进行网络请求
-				for (int i = 0; i < 10; i++) {
+				for (int i = 1; i <= 5; i++) {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
@@ -249,11 +305,11 @@ public class FilteringObservable {
 					t.onNext(new Bean("jack" + i));
 				}
 			}
-		}).throttleWithTimeout(100, TimeUnit.MILLISECONDS).subscribe(new Subscriber<Bean>() {
+		}).throttleWithTimeout(2000, TimeUnit.MILLISECONDS).subscribe(new Subscriber<Bean>() {
 
 			@Override
 			public void onCompleted() {
-				
+
 			}
 
 			@Override
@@ -266,29 +322,43 @@ public class FilteringObservable {
 				System.out.println("throttleWithTimeout:" + t.getName() + "  " + System.currentTimeMillis());
 			}
 		});
+	}
 
-		// debounce
-		System.out.println("--debounce");
+	// debounce
+	public static void debounce() {
 		Observable.create(new OnSubscribe<Bean>() {
 
 			@Override
 			public void call(Subscriber<? super Bean> t) {
 				// 比如在这里可以进行网络请求
+//				for (int i = 1; i <= 5; i++) {
+//					try {
+//						Thread.sleep(1000);
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
+//					System.out.println("i=" + i);
+//					t.onNext(new Bean("jack" + i));
+//				}
 				for (int i = 0; i < 10; i++) {
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					System.out.println("i=" + i);
-					t.onNext(new Bean("jack" + i));
-				}
+		            int sleep = 100;
+		            if (i % 3 == 0) {
+		                sleep = 300;
+		            }
+		            try {
+		                Thread.sleep(sleep);
+		            } catch (InterruptedException e) {
+		                e.printStackTrace();
+		            }
+		            t.onNext(new Bean("jack" + i));
+		        }
+		        t.onCompleted();
 			}
-		}).debounce(100, TimeUnit.MILLISECONDS).subscribe(new Subscriber<Bean>() {
+		}).debounce(200, TimeUnit.MILLISECONDS).subscribe(new Subscriber<Bean>() {
 
 			@Override
 			public void onCompleted() {
-				
+
 			}
 
 			@Override
@@ -301,8 +371,10 @@ public class FilteringObservable {
 				System.out.println("debounce:" + t.getName() + "  " + System.currentTimeMillis());
 			}
 		});
+	}
 
-		// timeout
+	// timeout 超时会执行error
+	public static void timeout() {
 		Observable.create(new OnSubscribe<String>() {
 
 			@Override
@@ -312,7 +384,7 @@ public class FilteringObservable {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				t.onNext("hello");
+				t.onNext("yes no time out");
 			}
 		}).timeout(2, TimeUnit.SECONDS).subscribe(new Subscriber<String>() {
 
@@ -331,9 +403,10 @@ public class FilteringObservable {
 				System.out.println(t);
 			}
 		});
+	}
 
-		// distinct
-		System.out.println("--distinct");
+	// distinct
+	public static void distinct() {
 		Observable.create(new OnSubscribe<Bean>() {
 
 			@Override
@@ -362,9 +435,10 @@ public class FilteringObservable {
 				System.out.println(t.getName());
 			}
 		});
+	}
 
-		// distinct func
-		System.out.println("--distinct func");
+	// distinct func1
+	public static void distinctFunc() {
 		Observable.create(new OnSubscribe<Bean>() {
 
 			@Override
@@ -400,9 +474,10 @@ public class FilteringObservable {
 				System.out.println("distinct onNext : " + t.getName());
 			}
 		});
-		
-		// distinctUntillChanged 去掉连续重复的值
-		System.out.println("--distinctUntillChanged");
+	}
+
+	// distinctUntillChanged 去掉连续重复的值
+	public static void distinctUntillChanged() {
 		Observable.create(new OnSubscribe<Bean>() {
 
 			@Override
@@ -421,21 +496,22 @@ public class FilteringObservable {
 			public void call(Bean t) {
 				System.out.println(t.getName());
 			}
-			
+
 		});
-		
-		// ofType
-		System.out.println("--ofType");
-		Observable.just("string", 0).ofType(String.class).subscribe(new Subscriber<Object> () {
+	}
+
+	// ofType
+	public static void ofType() {
+		Observable.just("string", 0).ofType(String.class).subscribe(new Subscriber<Object>() {
 
 			@Override
 			public void onCompleted() {
-				
+
 			}
 
 			@Override
 			public void onError(Throwable e) {
-				
+
 			}
 
 			@Override
@@ -443,11 +519,11 @@ public class FilteringObservable {
 				System.out.println(t);
 			}
 		});
-		
-		// ignoreElements
-		System.out.println("ignoreElements");
+	}
+
+	// ignoreElements
+	public static void ignoreElements() {
 		getObservable().ignoreElements().subscribe(getSubscriber());
-		
 	}
 
 }

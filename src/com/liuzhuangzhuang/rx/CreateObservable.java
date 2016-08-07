@@ -46,9 +46,10 @@ public class CreateObservable {
 	}
 	
 	public static void main(String[] args) {
-		just();
-		from();
-		//repeat();
+		// just();
+		// from();
+		// repeat();
+		timer();
 	}
 	
 	// just 最多可以放10个参数
@@ -350,21 +351,33 @@ public class CreateObservable {
 
 	public static void timer() {
 		// timer
-		Observable<Long> observableLong = Observable.timer(1, TimeUnit.SECONDS);
-		observableLong.subscribe(new Subscriber<Long>() {
+		System.out.println("timer");
+		Observable.timer(3, TimeUnit.SECONDS).subscribe(new Subscriber<Long>() {
+			
 			@Override
 			public void onCompleted() {
-				
+				System.out.println("complete");
 			}
+			
 			@Override
 			public void onError(Throwable e) {
-				
+				System.out.println("error : " + e.getMessage());
 			}
+			
 			@Override
 			public void onNext(Long t) {
-				System.out.println("timer : " + t);
+				System.out.println(String.valueOf(t));
 			}
 		});
+		System.out.println("over");
+		
+		try {
+			System.out.println("sleet start:");
+			Thread.sleep(5000);
+			System.out.println("sleep over:");
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 	}
 
 	public static void empty() {
