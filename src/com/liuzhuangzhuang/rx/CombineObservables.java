@@ -66,7 +66,7 @@ public class CombineObservables {
 			}
 		}), Observable.just("4", "5", "6")).subscribe(getSubscriber());
 		
-		// zip
+		// zip 不同数据类型合并在一起
 		System.out.println("--zip");
 		Observable.zip(Observable.just("a", "b", "c"), Observable.just(1, 2, 3, 4), new Func2<String, Integer, Bean>() {
 
@@ -122,70 +122,36 @@ public class CombineObservables {
 		
 		// join
 		System.out.println("--join");
-		Observable.create(
-			// the source Observable		
-			new OnSubscribe<String>() {
+		Observable.create(new OnSubscribe<String>() {
+	
+			@Override
+			public void call(Subscriber<? super String> t) {
+				t.onNext("liu");
+			}
+		}).join(Observable.create(new OnSubscribe<String>() {
 	
 				@Override
 				public void call(Subscriber<? super String> t) {
-					try {
-						System.out.println("sleep");
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					t.onNext("a");
-					t.onNext("b");
-					t.onCompleted();
-				}
-			})
-		.join(
-			// the second Observable to combine with the source Observable
-			Observable.create(new OnSubscribe<Integer>() {
-	
-				@Override
-				public void call(Subscriber<? super Integer> t) {
 					for (int i = 1; i <= 5; i++) {
-						try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-						t.onNext(i);
+						t.onNext("zhuang" + i);
 					}
 				}
-			})
-			, 
-			// a function that accepts an item from the source Observable and 
-			// returns an Observable whose lifespan governs the duration during which 
-			// that item will combine with items from the second Observable
-			new Func1<String, Observable<Long>>() {
+			}),new Func1<String, Observable<Long>>() {
 	
 				@Override
 				public Observable<Long> call(String string) {
-					System.out.println("1func : " + string);
-					return Observable.timer(3, TimeUnit.SECONDS);
+					return Observable.timer(1, TimeUnit.SECONDS);
 				}
-			}, 
-			// a function that accepts an item from the second Observable and 
-			// returns an Observable whose lifespan governs the duration during which 
-			// that item will combine with items from the first Observable
-			new Func1<Integer, Observable<Long>>() {
+			},new Func1<String, Observable<Long>>() {
 	
 				@Override
-				public Observable<Long> call(Integer t) {
-					System.out.println("2func : " + t);
-					return Observable.timer(3, TimeUnit.SECONDS);
+				public Observable<Long> call(String t) {
+					return Observable.timer(1, TimeUnit.SECONDS);
 				}
-			}, 
-			// a function that accepts an item from the first Observable
-			// and an item from the second Observable 
-			// and returns an item to be emitted by the Observable returned from join
-			new Func2<String, Integer, Observable<Bean>>() {
+			},new Func2<String, String, Observable<Bean>>() {
 	
 				@Override
-				public Observable<Bean> call(String t1, Integer t2) {
-					System.out.println("3func t1 : " + t1 + " t2 : " + t2);
+				public Observable<Bean> call(String t1, String t2) {
 					return Observable.just(new Bean(t1 + t2));
 				}
 			})
@@ -203,13 +169,30 @@ public class CombineObservables {
 
 			@Override
 			public void onNext(Observable<Bean> t) {
-				System.out.println("...");
+				t.subscribe(new Subscriber<Bean>() {
+
+					@Override
+					public void onCompleted() {
+						
+					}
+
+					@Override
+					public void onError(Throwable e) {
+						
+					}
+
+					@Override
+					public void onNext(Bean t) {
+						System.out.println(t.getName());
+					}
+				});
 			}
 		});
-//		try {
-//			Thread.sleep(10000);
-//		} catch (InterruptedException e1) {
-//			e1.printStackTrace();
-//		}
+		System.out.println("join over");
+		
+		// groupjoin
+		
+		// switchOnNext
+		Observable.switchOnNext(Observable.just(Observable.just("a"), Observable.just("b"))).subscribe(getSubscriber());
 	}
 }

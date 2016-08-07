@@ -49,10 +49,26 @@ public class CreateObservable {
 		// just();
 		// from();
 		// repeat();
-		timer();
+		// create();
+		// defer();
+		// range();
+		// interval();
+		// timer();
+		// empty();
+		// error();
+		// never();
+		
+		// 防止有定时操作的时候程序退出，导致定时操作没了没了
+		System.out.println("main sleep");
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		System.out.println("main over");
 	}
 	
-	// just 最多可以放10个参数
+	// just 最多可以放10个参数 就是发送10次
 	public static void just() {
 		
 		// 发射一个炮弹
@@ -76,11 +92,12 @@ public class CreateObservable {
 		});
 
 		// 发射10个炮弹
-		observable = Observable.just(new Bean("jack1"), new Bean("jack2"),
-				new Bean("jack3"), new Bean("jack4"), new Bean("jack5"),
+		observable = Observable.just(new Bean("jack1"), new Bean("jack2"), new Bean("jack3"), new Bean("jack4"), new Bean("jack5"),
 				new Bean("jack6"), new Bean("jack7"), new Bean("jack8"),
 				new Bean("jack9"), new Bean("jack10")); // 和 Observable.from(beans)等价的
+		
 		observable.subscribe(new Subscriber<Bean>() {
+			
 			@Override
 			public void onCompleted() {
 				System.out.println("complete");
@@ -98,7 +115,7 @@ public class CreateObservable {
 			}
 		});
 
-		// 发射一个子母弹
+		// 发射一组兄弟弹
 		Observable<List<Bean>> observableBeans = Observable.just(beans); // 和上面的返回值不一样
 		observableBeans.subscribe(new Subscriber<List<Bean>>() {
 
@@ -115,22 +132,27 @@ public class CreateObservable {
 			@Override
 			public void onNext(List<Bean> t) {
 				System.out.println("next");
-				// 因为传的是 List<Bean>，是一个对象，所以只会执行一次 onNext , 而不同于上面传多个对象，执行多次 onNext
+				// 因为调用的是 just(T) List<Bean>，是一个对象，所以只会执行一次 onNext , 而不同于上面传多个对象，执行多次 onNext
 				for (Bean bean : t) {
 					System.out.println(bean.getName());
 				}
 			}
 		});
 		
-		// 多种类型
+		// Object 类型
 		Observable.just("1", 2, new Bean("3")).subscribe(new Subscriber<Object>() {
+			
 			@Override
 			public void onCompleted() {
 				System.out.println("complete");
-			}@Override
+			}
+			
+			@Override
 			public void onError(Throwable throwable) {
 				System.out.println("error");
-			}@Override
+			}
+			
+			@Override
 			public void onNext(Object object) {
 				if (object instanceof Bean) {
 					Bean bean = (Bean) object;
@@ -142,9 +164,10 @@ public class CreateObservable {
 		});
 	}
 	
+	// from
 	public static void from() {
-		// from
-		List<Future<Bean>> futures = new ArrayList<Future<Bean>>(); // Future 未来
+		// 数据
+		List<Future<Bean>> futures = new ArrayList<Future<Bean>>(); // Future；［'fjʊtʃɚ］ 未来
 		ExecutorService executor = Executors.newFixedThreadPool(10);
 		for (int i = 0; i < 10; i++) {
 			Future<Bean> future = executor.submit(new Callable<Bean>() {
@@ -154,6 +177,31 @@ public class CreateObservable {
 			});
 			futures.add(future);
 		}
+		
+		// List<Future<Bean>>
+		Observable<Future<Bean>> furureBeanObservable = Observable.from(futures); // List<Future<Bean>> 和just不一样，just是传List执行一次，from传List执行List.size()次
+		furureBeanObservable.subscribe(new Observer<Future<Bean>>() {
+
+			@Override
+			public void onCompleted() {
+				System.out.println("complete");
+			}
+
+			@Override
+			public void onError(Throwable e) {
+				System.out.println("error");
+			}
+
+			@Override
+			public void onNext(Future<Bean> t) {
+				System.out.println("next");
+				try {
+					System.out.println(t.get().getName());
+				} catch (InterruptedException | ExecutionException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 		
 		// Future<Bean>
 		Observable<Bean> observable = Observable.from(executor.submit(new Callable<Bean>() {
@@ -179,31 +227,8 @@ public class CreateObservable {
 				System.out.println(t.getName());
 			}
 		});
-		
-		Observable<Future<Bean>> furureBeanObservable = Observable.from(futures); // List<Future<Bean>> 和just不一样，just是传List执行一次，from传List执行List.size()次
-		furureBeanObservable.subscribe(new Observer<Future<Bean>>() {
 
-			@Override
-			public void onCompleted() {
-				System.out.println("complete");
-			}
-
-			@Override
-			public void onError(Throwable e) {
-				System.out.println("error");
-			}
-
-			@Override
-			public void onNext(Future<Bean> t) {
-				System.out.println("next");
-				try {
-					System.out.println(t.get().getName());
-				} catch (InterruptedException | ExecutionException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-
+		// List<Bean>
 		observable = Observable.from(beans); // 传的是数组，会执行多次 call
 		observable.subscribe(new Action1<Bean>() {
 			@Override
@@ -213,11 +238,12 @@ public class CreateObservable {
 		});
 	}
 	
+	// repeat
 	public static void repeat() {
-		// repeat
-		Observable<Bean> observable = Observable.from(beans);
-		observable = observable.repeat(2);
-		observable.subscribe(new Subscriber<Bean>() {
+		Bean[] beans = new Bean[] { new Bean("jack") };
+		
+		// 在创建后发射数据前调用 （总共会发射两次，而不是2+1
+		Observable.from(beans).repeat(2).subscribe(new Subscriber<Bean>() {
 
 			@Override
 			public void onCompleted() {
@@ -235,15 +261,16 @@ public class CreateObservable {
 			}
 		});
 
-		observable = observable.repeatWhen(new Func1<Observable<? extends Void>, Observable<?>>() {
+		// repeatWhen 指定时候后再重复执行一次
+		Observable.from(beans).repeatWhen(new Func1<Observable<? extends Void>, Observable<?>>() {
 			
 			@Override
 			public rx.Observable<?> call(Observable<? extends Void> observable) {
 				System.out.println("repeatWhen call");
-				return Observable.timer(1, TimeUnit.SECONDS);
+				return Observable.timer(5, TimeUnit.SECONDS); // 5秒后再重新执行一次
 			};
-		});
-		observable.subscribe(new Observer<Bean>() {
+		}).subscribe(new Observer<Bean>() {
+			
 			@Override
 			public void onCompleted() {
 				System.out.println("complete");
@@ -256,32 +283,38 @@ public class CreateObservable {
 
 			@Override
 			public void onNext(Bean t) {
-				System.out.println("repeatWhen:" + t.getName());
+				System.out.println("repeatWhen : " + t.getName());
 			}
 		});
 	}
 	
+	// create
 	public static void create() {
-		// create
 		Observable<Bean> observable = Observable.create(new OnSubscribe<Bean>() {
 			@Override
 			public void call(Subscriber<? super Bean> t) {
-				System.out.println("Observable create");
-				Bean bean = new Bean("rose"); // 数据源
+				Bean bean = new Bean("rose1"); // 数据源
 				t.onNext(bean);
-				t.onCompleted();
-				// just from 都是提供好数据然后自动 onNext onCompleted 的，create 需要手动调用
+				Bean bean2 = new Bean("rose2"); // 数据源
+				t.onNext(bean2);
+				t.onError(new Throwable("外星人入侵"));
+				// t.onCompleted(); // 注释后，就不会调用 onCompleted 方法
+				t.onNext(bean2); // 在 onError 或者 onCompleted 方法之后调用 onNext 不会报错，但也不会执行
+				// just from 都是提供好数据然后自动执行的 onNext和onCompleted，但是 create 需要手动调用
 			}
 		});
 		observable.subscribe(new Subscriber<Bean>() {
+			
 			@Override
 			public void onCompleted() {
 				System.out.println("complete");
 			}
+			
 			@Override
 			public void onError(Throwable e) {
-				System.out.println("error");
+				System.out.println("error : " + e.getMessage());
 			}
+			
 			@Override
 			public void onNext(Bean t) {
 				System.out.println("create:" + t.getName());
@@ -289,8 +322,8 @@ public class CreateObservable {
 		});
 	}
 	
+	// defer
 	public static void defer() {
-		// defer
 		Observable<Bean> observable = Observable.defer(new Func0<Observable<Bean>>() {
 			@Override
 			public Observable<Bean> call() {
@@ -298,32 +331,36 @@ public class CreateObservable {
 				return Observable.just(new Bean("beanDef"));
 			}
 		});
+		System.out.println("subscribe1");
 		observable.subscribe(new Action1<Bean>() {
 			@Override
 			public void call(Bean t) {
-				System.out.println("def1:" + t.getName());
+				System.out.println(t.getName());
 			}
 		});
-		observable.subscribe(new Action1<Bean>() {
+		System.out.println("subscribe2");
+		observable.subscribe(new Action1<Bean>() { // 每订阅一次都会重新再走一遍流程
 			@Override
 			public void call(Bean t) {
-				System.out.println("def2:" + t.getName());
+				System.out.println(t.getName());
 			}
 		});
-		
 	}
 
+	// range
 	public static void range() {
-		// range
 		Observable.range(0, 10).subscribe(new Subscriber<Integer>() {
+			
 			@Override
 			public void onCompleted() {
 				
 			}
+			
 			@Override
 			public void onError(Throwable e) {
 				
 			}
+			
 			@Override
 			public void onNext(Integer t) {
 				System.out.println(t);
@@ -331,17 +368,21 @@ public class CreateObservable {
 		});
 	}
 	
+	// interval
 	public static void interval() {
-		// interval
-		Observable.interval(10000, TimeUnit.SECONDS).subscribe(new Observer<Long>() {
+		//  周期循环 这是一个异步操作不会堵住祝线程
+		Observable.interval(1, TimeUnit.SECONDS).subscribe(new Observer<Long>() {
+			
 			@Override
 			public void onCompleted() {
 				
 			}
+			
 			@Override
 			public void onError(Throwable e) {
 				
 			}
+			
 			@Override
 			public void onNext(Long t) {
 				System.out.println("interval:" + t);
@@ -349,9 +390,9 @@ public class CreateObservable {
 		});
 	}
 
+	// timer
 	public static void timer() {
-		// timer
-		System.out.println("timer");
+		// 3秒钟之后发射一个0L 这是一个异步操作 不会堵住线程，所以你要保证倒计时完成之后你的程序还在哦
 		Observable.timer(3, TimeUnit.SECONDS).subscribe(new Subscriber<Long>() {
 			
 			@Override
@@ -369,21 +410,12 @@ public class CreateObservable {
 				System.out.println(String.valueOf(t));
 			}
 		});
-		System.out.println("over");
-		
-		try {
-			System.out.println("sleet start:");
-			Thread.sleep(5000);
-			System.out.println("sleep over:");
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
 	}
 
+	// empty
 	public static void empty() {
-		// empty
-		Observable<Object> observableObject = Observable.empty();
-		observableObject.subscribe(new Observer<Object>() {
+		// 什么数据也不发射，然后执行 complete 方法
+		Observable.empty().subscribe(new Observer<Object>() {
 			
 			@Override
 			public void onCompleted() {
@@ -402,10 +434,10 @@ public class CreateObservable {
 		});
 	}
 
+	// error
 	public static void error() {
-		// error
-		Observable<Object> observableObject = Observable.error(new Throwable());
-		observableObject.subscribe(new Observer<Object>() {
+		// 什么数据也不发射，然后执行 error 方法
+		Observable.error(new Throwable()).subscribe(new Observer<Object>() {
 			
 			@Override
 			public void onCompleted() {
@@ -424,10 +456,10 @@ public class CreateObservable {
 		});
 	}
 
+	// never
 	public static void never() {
-		// never
-		Observable<Object> observableObject = Observable.never();
-		observableObject.subscribe(new Observer<Object>() {
+		// 什么数据也不发射，什么方法也不执行 什么情况下会用到这个特性呢
+		Observable.never().subscribe(new Observer<Object>() {
 			
 			@Override
 			public void onCompleted() {
