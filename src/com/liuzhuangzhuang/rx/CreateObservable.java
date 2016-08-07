@@ -324,11 +324,12 @@ public class CreateObservable {
 	
 	// defer
 	public static void defer() {
+		// 在subscribe的时候才创建Observable
 		Observable<Bean> observable = Observable.defer(new Func0<Observable<Bean>>() {
 			@Override
 			public Observable<Bean> call() {
 				System.out.println("defer call");
-				return Observable.just(new Bean("beanDef"));
+				return Observable.just(new Bean("beanDef" + System.currentTimeMillis())); // 被订阅的时候才会创建
 			}
 		});
 		System.out.println("subscribe1");
@@ -349,6 +350,7 @@ public class CreateObservable {
 
 	// range
 	public static void range() {
+		// start 开始值 count 个数
 		Observable.range(0, 10).subscribe(new Subscriber<Integer>() {
 			
 			@Override
@@ -371,23 +373,29 @@ public class CreateObservable {
 	// interval
 	public static void interval() {
 		//  周期循环 这是一个异步操作不会堵住祝线程
-		Observable.interval(1, TimeUnit.SECONDS).subscribe(new Observer<Long>() {
+		Observable<Long> observable = Observable.interval(1, TimeUnit.SECONDS);
+		Subscriber<Long> subscriber = new Subscriber<Long>() {
 			
 			@Override
 			public void onCompleted() {
-				
+				System.out.println("complete");
 			}
 			
 			@Override
 			public void onError(Throwable e) {
-				
+				System.out.println("error");
 			}
 			
 			@Override
 			public void onNext(Long t) {
 				System.out.println("interval:" + t);
+				if (t == 5l) {
+					unsubscribe(); // Subscriber才有取消订阅的方法 Observer没有
+					System.out.println("停止订阅");
+				}
 			}
-		});
+		};
+		observable.subscribe(subscriber);
 	}
 
 	// timer
