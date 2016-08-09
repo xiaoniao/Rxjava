@@ -28,7 +28,11 @@ public class CreateObservable {
 		}
 	}
 
-	static class Bean {
+	static interface Compare {
+		String compare();
+	}
+	
+	static class Bean implements Compare{
 
 		private String name;
 
@@ -42,6 +46,10 @@ public class CreateObservable {
 
 		public void setName(String name) {
 			this.name = name;
+		}
+		
+		public String compare() {
+			return String.valueOf(name);
 		}
 	}
 	
@@ -261,7 +269,7 @@ public class CreateObservable {
 			}
 		});
 
-		// repeatWhen 指定时候后再重复执行一次
+		// repeatWhen 指定时候后再重复执行一次 和时间有关系
 		Observable.from(beans).repeatWhen(new Func1<Observable<? extends Void>, Observable<?>>() {
 			
 			@Override
